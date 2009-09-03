@@ -23,6 +23,15 @@ sub init_meta {
       ->apply($meta, name => $_, require_class_accessor => 0);
   }
 
+  $meta->add_after_method_modifier('setup_finalize' => sub {
+    my ($app) = @_;
+
+    if (my $cfg = $app->config->{'CatalystX::RoleApplicator'}) {
+      while (my ($class, $roles) = each(%$cfg)) {
+        $app->${\"apply_$class\_class_roles"}(ref($roles) ? @$roles : $roles);
+      }
+    }
+  });
   return $meta;
 }
 
@@ -40,6 +49,22 @@ __END__
 
   __PACKAGE__->apply_request_class_roles(
     qw/My::Request::Role Other::Request::Role/
+  );
+
+
+  # You can also specify the roles to load as config:
+
+  package MyApp;
+
+  use base 'Catalyst';
+  use Catalyst;
+  use CatalystX::RoleApplicator;
+
+  __PACKAGE__->config(
+      'CatalystX::RoleApplicator' => {
+          request => 'TestRole',
+          response => [qw/TestRole TestRole2/],
+      },
   );
 
 =head1 DESCRIPTION
